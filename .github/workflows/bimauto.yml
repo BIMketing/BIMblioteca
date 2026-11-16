@@ -1,0 +1,64 @@
+# BIMblioteca · al subir un IFC genera su GLB y su USDZ y actualiza la hoja de Google.
+# El CMS de Framer y la publicación de la web se siguen haciendo a mano.
+name: BIMblioteca · GLB/USDZ y hoja
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "**/*.ifc"
+      - "**/*.IFC"
+  workflow_dispatch: # botón "Run workflow" en la pestaña Actions, para lanzarlo a mano
+
+permissions:
+  contents: write # para subir los GLB/USDZ generados
+  pages: write # para pedir que GitHub Pages se vuelva a publicar
+
+concurrency:
+  group: bimauto
+  cancel-in-progress: false
+
+jobs:
+  generar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar herramientas
+        run: |
+          pip install --quiet usd-core
+          cd bimauto && npm install --no-audit --no-fund --silent
+
+      - name: Generar GLB/USDZ y actualizar la hoja
+        env:
+          GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+          SHEET_ID: ${{ vars.SHEET_ID }}
+          SHEET_NAME: ${{ vars.SHEET_NAME || 'Hoja 1' }}
+          BRANCH: main
+        run: node bimauto/bimauto.mjs
+
+      - name: Subir los archivos generados
+        if: always()
+        run: |
+          git config user.name "bimauto"
+          git config user.email "bimauto@users.noreply.github.com"
+          git add -A -- . ":(exclude)bimauto/node_modules"
+          if git diff --cached --quiet; then
+            echo "No hay archivos nuevos"
+          else
+            git commit -m "bimauto: GLB/USDZ generados desde IFC"
+            git push
+            # Los commits de este flujo no relanzan GitHub Pages por sí solos: se pide a mano
+            curl -s -X POST -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${{ github.repository }}/pages/builds" || true
+          fi

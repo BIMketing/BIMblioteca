@@ -1,0 +1,14 @@
+{
+  "name": "bimauto",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@gltf-transform/core": "^4.1.1",
+    "@gltf-transform/extensions": "^4.5.1",
+    "@gltf-transform/functions": "^4.5.1",
+    "draco3dgltf": "^1.5.9",
+    "googleapis": "^144.0.0",
+    "three": "0.169.0",
+    "web-ifc": "0.0.79"
+  }
+}
