@@ -41,7 +41,7 @@ jobs:
       - name: Generar GLB/USDZ y actualizar la hoja
         env:
           GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
-          SHEET_ID: ${{ vars.SHEET_ID }}
+          SHEET_ID: ${{ vars.SHEET_ID || '1SreamFiKatTxWfxFZR9j2VSqhXA_iFHagnkpX19lxL4' }}
           SHEET_NAME: ${{ vars.SHEET_NAME || 'Hoja 1' }}
           BRANCH: main
         run: node bimauto/bimauto.mjs
